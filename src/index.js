@@ -5,8 +5,25 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
 import * as basicLightbox from 'basiclightbox';
 import 'basiclightbox/dist/basiclightbox.min.css';
-require('intersection-observer');
+import { success, error, defaults, defaultModules, Stack } from '@pnotify/core';
+import '@pnotify/core/dist/PNotify.css';
+import '@pnotify/mobile/dist/PNotifyMobile.css';
+import '@pnotify/core/dist/BrightTheme.css';
+import * as PNotifyMobile from '@pnotify/mobile/dist/PNotifyMobile.js';
 
+const myStack = new Stack({
+  dir1: 'up',
+  dir2: 'right',
+  firstpos1: 25,
+  spacing1: 25,
+  push: 'top',
+  modal: false,
+  overlayClose: false,
+});
+defaults.mode = 'light';
+defaults.delay = 1000;
+defaults.stack = myStack;
+defaultModules.set(PNotifyMobile, {});
 //рефералки
 const refGallery = document.querySelector('.gallery');
 const refForm = document.querySelector('.search-form');
@@ -19,6 +36,10 @@ let viewElement;
 const loadImages = (item, flag) => {
   return API.getImages(item, flag).then(data => {
     refGallery.insertAdjacentHTML('beforeend', makeImageCard(data.hits));
+    success({
+      title: 'Success!',
+      text: 'New images Loaded',
+    });
   });
 };
 
@@ -40,16 +61,30 @@ const observerWatch = e => {
         viewElement = document.querySelector('.gallery').lastElementChild;
         console.log(viewElement);
         lazyLoad(viewElement);
-      });
+      })
+      .catch(() =>
+        error({
+          title: 'Error!',
+          text: 'Please, try another request',
+        }),
+      );
   } else if ((e.target.id = 'load-more')) {
     flagNewPage += 1;
     let count = document.querySelector('.gallery').clientHeight + 60;
-    return loadImages(refForm.firstElementChild.value, flagNewPage).then(() => {
-      window.scrollTo({
-        top: count,
-        behavior: 'smooth',
-      });
-    });
+    return loadImages(refForm.firstElementChild.value, flagNewPage)
+      .then(() => {
+        window.scrollTo({
+          top: count,
+          behavior: 'smooth',
+        });
+        return;
+      })
+      .catch(() =>
+        error({
+          title: 'Error!',
+          text: 'Please, try another request',
+        }),
+      );
   }
 };
 
@@ -70,10 +105,17 @@ const lazyLoad = entry => {
   const io = new IntersectionObserver(
     (entry, observer) => {
       if (entry[0].isIntersecting) {
-        loadImages(refForm.firstElementChild.value, flagNewPage).then(() => {
-          viewElement = document.querySelector('.gallery').lastElementChild;
-          lazyLoad(viewElement);
-        });
+        loadImages(refForm.firstElementChild.value, flagNewPage)
+          .then(() => {
+            viewElement = document.querySelector('.gallery').lastElementChild;
+            lazyLoad(viewElement);
+          })
+          .catch(() =>
+            error({
+              title: 'Error!',
+              text: 'Please, try another request',
+            }),
+          );
         observer.disconnect();
       }
     },
