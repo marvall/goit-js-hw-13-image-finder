@@ -49,9 +49,11 @@
     "webpackbar": "^4.0.0"
   },
   "dependencies": {
+    "basiclightbox": "^5.0.3",
     "bootstrap": "^4.5.3",
     "core-js": "^3.6.5",
     "handlebars": "^4.7.6",
+    "intersection-observer": "^0.12.0",
     "material-design-icons": "^3.0.1"
   }
 }
