@@ -1,29 +1,10 @@
 import './sass/main.scss';
-import API from './js/apiService';
-import makeImageCard from './templates/imageCard.hbs';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'material-design-icons/iconfont/material-icons.css';
-import * as basicLightbox from 'basiclightbox';
-import 'basiclightbox/dist/basiclightbox.min.css';
-import { success, error, defaults, defaultModules, Stack } from '@pnotify/core';
-import '@pnotify/core/dist/PNotify.css';
-import '@pnotify/mobile/dist/PNotifyMobile.css';
-import '@pnotify/core/dist/BrightTheme.css';
-import * as PNotifyMobile from '@pnotify/mobile/dist/PNotifyMobile.js';
+import { showLargeImage } from './js/showLargeImage';
+import { error } from './js/pnotify';
+import { loadImages } from './js/loadImages';
 
-const myStack = new Stack({
-  dir1: 'up',
-  dir2: 'right',
-  firstpos1: 25,
-  spacing1: 25,
-  push: 'top',
-  modal: false,
-  overlayClose: false,
-});
-defaults.mode = 'light';
-defaults.delay = 1000;
-defaults.stack = myStack;
-defaultModules.set(PNotifyMobile, {});
 //рефералки
 const refGallery = document.querySelector('.gallery');
 const refForm = document.querySelector('.search-form');
@@ -33,15 +14,6 @@ let flagNewPage = 1;
 let viewElement;
 
 // Загрузка картинок
-const loadImages = (item, flag) => {
-  return API.getImages(item, flag).then(data => {
-    refGallery.insertAdjacentHTML('beforeend', makeImageCard(data.hits));
-    success({
-      title: 'Success!',
-      text: 'New images Loaded',
-    });
-  });
-};
 
 //Слушатель событий
 const observerWatch = e => {
@@ -50,7 +22,7 @@ const observerWatch = e => {
   if (e.target.id === 'search-form') {
     refGallery.innerHTML = '';
     flagNewPage = 1;
-    return loadImages(e.target.firstElementChild.value, flagNewPage)
+    return loadImages(e.target.firstElementChild.value, flagNewPage, refGallery)
       .then(() => {
         window.scrollTo({
           top: 60,
@@ -71,7 +43,7 @@ const observerWatch = e => {
   } else if ((e.target.id = 'load-more')) {
     flagNewPage += 1;
     let count = document.querySelector('.gallery').clientHeight + 60;
-    return loadImages(refForm.firstElementChild.value, flagNewPage)
+    return loadImages(refForm.firstElementChild.value, flagNewPage, refGallery)
       .then(() => {
         window.scrollTo({
           top: count,
@@ -88,16 +60,7 @@ const observerWatch = e => {
   }
 };
 
-const showLargeImages = e => {
-  e.preventDefault();
-  const instance = basicLightbox.create(`
-    <img src="${e.target.dataset.large}" width="800">
-`);
-
-  instance.show();
-};
-
-/* test для intersection */
+/* InterSection Observer */
 
 const lazyLoad = entry => {
   flagNewPage += 1;
@@ -105,7 +68,7 @@ const lazyLoad = entry => {
   const io = new IntersectionObserver(
     (entry, observer) => {
       if (entry[0].isIntersecting) {
-        loadImages(refForm.firstElementChild.value, flagNewPage)
+        loadImages(refForm.firstElementChild.value, flagNewPage, refGallery)
           .then(() => {
             viewElement = document.querySelector('.gallery').lastElementChild;
             lazyLoad(viewElement);
@@ -130,4 +93,4 @@ const lazyLoad = entry => {
 //eventListeners
 refForm.addEventListener('submit', observerWatch);
 refButtonLoad.addEventListener('click', observerWatch);
-refGallery.addEventListener('click', showLargeImages);
+refGallery.addEventListener('click', showLargeImage);
